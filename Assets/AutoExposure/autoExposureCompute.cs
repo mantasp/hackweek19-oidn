@@ -1,25 +1,34 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 [ExecuteInEditMode]
 public class autoExposureCompute : MonoBehaviour
 {
     public ComputeShader computeExposureShader;
+    public ComputeShader mapHDRShader;
+    public ComputeShader unmapHDRShader;
 
     private float lumSum = 0.0f;
-    private int nonBlack = 0;
-    private float[] groupMaxData;
+    private float nonBlack = 0.0f;
+    public  float[] groupMaxData;
     private ComputeBuffer groupMaxBuffer;
     private int handleComputeExposureMain;
+    private int handleMapHDRMain;
+    private int handleUnmapHDRMain;
 
     public bool run = false;
     public bool clear = false;
     public Texture2D input;
     public float exposureValue;
-    //public Texture2D outputMapped;
-    //public Texture2D outputMappedInverse;
+    public Texture2D outputMapped;
+    public Texture2D outputMappedInverse;
+
+
+    // Start is called before the first frame update
+    void Start()
+    {
+    }
 
     void MakeBlack(Texture2D inputOutput)
     {
@@ -39,22 +48,23 @@ public class autoExposureCompute : MonoBehaviour
     {
         if (clear)
         {
-            //MakeBlack(outputMapped);
-            //MakeBlack(outputMappedInverse);
+            MakeBlack(outputMapped);
+            MakeBlack(outputMappedInverse);
             lumSum = 0.0f;
-            nonBlack = 0;
+            nonBlack = 0.0f;
             exposureValue = 0.0f;
             clear = false;
         }
         if (run)
         {
-            //MakeBlack(outputMapped);
-            //MakeBlack(outputMappedInverse);
+            run = false;
 
-            if (null == computeExposureShader || null == input/* || null == outputMapped || null == outputMappedInverse*/)
+            MakeBlack(outputMapped);
+            MakeBlack(outputMappedInverse);
+
+            if (null == computeExposureShader|| null == mapHDRShader || null == unmapHDRShader || null == input || null == outputMapped || null == outputMappedInverse)
             {
                 Debug.Log("Shader or textures missing.");
-                run = false;
                 return;
             }
 
@@ -66,7 +76,6 @@ public class autoExposureCompute : MonoBehaviour
             if (handleComputeExposureMain < 0 || null == groupMaxBuffer || null == groupMaxData)
             {
                 Debug.Log("Initialization failed.");
-                run = false;
                 return;
             }
 
@@ -79,16 +88,16 @@ public class autoExposureCompute : MonoBehaviour
             // divided by 64 in x because of [numthreads(64,1,1)] in the compute shader code
             // added 63 to make sure that there is a group for all rows
 
-            // get maxima of groups
+            // get sum of groups
             groupMaxBuffer.GetData(groupMaxData);
 
-            // find maximum of all groups
+            // find sum of all groups
             lumSum = 0.0f;
-            nonBlack = 0;
+            nonBlack = 0.0f;
             for (int group = 0; group < (input.height + 63) / 64; group++)
             {
                 lumSum += groupMaxData[2 * group + 1];
-                nonBlack += (int)groupMaxData[2 * group + 0];
+                nonBlack += groupMaxData[2 * group + 0];
             }
             exposureValue = 1.0f;
             if (nonBlack > 0)
@@ -104,7 +113,51 @@ public class autoExposureCompute : MonoBehaviour
                 groupMaxBuffer.Release();
             }
 
-            run = false;
+            // Allocate a render texture
+            RenderTexture rt;
+            rt = new RenderTexture(input.width, input.height, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            rt.enableRandomWrite = true;
+            rt.Create();
+
+            // Map to HDR
+            handleMapHDRMain = mapHDRShader.FindKernel("MapHDRMain");
+            if (handleMapHDRMain < 0)
+            {
+                Debug.Log("Initialization failed.");
+                rt.Release();
+                return;
+            }
+
+            mapHDRShader.SetTexture(handleMapHDRMain, "InputTexture", input);
+            mapHDRShader.SetTexture(handleMapHDRMain, "OutputTexture", rt);
+            mapHDRShader.SetFloat("exposure", exposureValue);
+            mapHDRShader.Dispatch(handleMapHDRMain, input.width, input.height, 1);
+
+            RenderTexture.active = rt;
+            outputMapped.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            outputMapped.Apply();
+            RenderTexture.active = null;
+
+            // Unmap from HDR
+            handleUnmapHDRMain = unmapHDRShader.FindKernel("UnmapHDRMain");
+            if (handleUnmapHDRMain < 0)
+            {
+                Debug.Log("Initialization failed.");
+                rt.Release();
+                return;
+            }
+
+            unmapHDRShader.SetTexture(handleUnmapHDRMain, "InputTexture", outputMapped);
+            unmapHDRShader.SetTexture(handleUnmapHDRMain, "OutputTexture", rt);
+            unmapHDRShader.SetFloat("inverseExposure", 1.0f/exposureValue);
+            unmapHDRShader.Dispatch(handleUnmapHDRMain, input.width, input.height, 1);
+
+            RenderTexture.active = rt;
+            outputMappedInverse.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            outputMappedInverse.Apply();
+            RenderTexture.active = null;
+
+            rt.Release();
         }
     }
 }

@@ -1,0 +1,17 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel UnmapHDRMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+Texture2D<float4> InputTexture;
+RWTexture2D<float4> OutputTexture;
+float inverseExposure;
+
+[numthreads(8, 8, 1)]
+void UnmapHDRMain (uint3 id : SV_DispatchThreadID)
+{
+    float4 color = InputTexture[id.xy];
+    color = pow(color, 2.2) * 16.0;
+    color = pow(2.0, color) - 1.0;
+    OutputTexture[id.xy] = color * inverseExposure;
+}
