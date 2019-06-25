@@ -7,11 +7,12 @@ using UnityEngine.UI;
 
 public class RunTest : MonoBehaviour
 {
-	public Texture2D inputImage;
+	private Texture2D inputImage;
 
 	public RawImage displayImage;
 
 	public TextAsset weightsJSON;
+	public TextAsset pfmBytes;
 
 	private Model model;
 	private IWorker engine;
@@ -22,10 +23,16 @@ public class RunTest : MonoBehaviour
 	void Start ()
 	{
 		Application.targetFrameRate = 60;
-		
+
+		if (inputImage != null)
+		{
+			Destroy(inputImage);
+		}
+		inputImage = ReadPFM.Read(pfmBytes);	
+
 		model = OIDNModel.BuildModel(weightsJSON, inputImage.height, inputImage.width);
 		engine = BarracudaWorkerFactory.CreateWorker(BarracudaWorkerFactory.Type.Compute, model, true);
-		
+
 		inputTensor = new Tensor(inputImage);
 
 		StartCoroutine(RunInference());
