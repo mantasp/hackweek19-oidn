@@ -36,6 +36,7 @@ public class RunTest : MonoBehaviour
 		// Skip frame before starting
 		yield return null;
 		displayImage.texture = inputImage;
+		displayImage.rectTransform.sizeDelta = new Vector2(inputImage.width, inputImage.height);
 
 		Profiler.BeginSample("Schedule execution");
 		engine.Execute(inputTensor);
@@ -55,5 +56,17 @@ public class RunTest : MonoBehaviour
 
 		engine.Dispose();
 		inputTensor.Dispose();
+	}
+
+	void Update()
+	{
+		if (Input.GetKey(KeyCode.Space))
+		{
+			displayImage.texture = inputImage;
+		}
+		else if (rt != null)
+		{
+			displayImage.texture = rt;
+		}
 	}
 }
