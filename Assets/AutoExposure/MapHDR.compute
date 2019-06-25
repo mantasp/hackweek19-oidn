@@ -1,0 +1,19 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel MapHDRMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+Texture2D<float4> InputTexture;
+RWTexture2D<float4> OutputTexture;
+float exposure;
+
+[numthreads(8,8,1)]
+void MapHDRMain (uint3 id : SV_DispatchThreadID)
+{
+    float4 color = InputTexture[id.xy];
+    color *= exposure;
+    const float log2 = 1.0 / log(2.0);
+    color = log(color + 1.0) * log2 * (1.0 / 16.0);
+    color = pow(color, 1.0 / 2.2);
+    OutputTexture[id.xy] = color;
+}
