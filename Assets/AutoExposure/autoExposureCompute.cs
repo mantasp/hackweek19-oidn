@@ -65,6 +65,7 @@ public class autoExposureCompute : MonoBehaviour
             if (outputMappedInverse)
                 MakeBlack(outputMappedInverse);
 
+            // Check that all the stuff is available
             if (null == computeExposureShader|| null == mapHDRShader || null == unmapHDRShader || null == input || null == outputMapped || null == outputMappedInverse)
             {
                 Debug.Log("Shader or textures missing.");
