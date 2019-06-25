@@ -16,6 +16,7 @@ public class RunTest : MonoBehaviour
 	private Model model;
 	private IWorker engine;
 	private Tensor inputTensor;
+	private RenderTexture rt;
 
 	// Use this for initialization
 	void Start ()
@@ -44,6 +45,9 @@ public class RunTest : MonoBehaviour
 		Profiler.BeginSample("Fetch execution results");
 		var output = engine.Peek();
 		Profiler.EndSample();
+
+		rt = BarracudaTextureUtils.TensorToRenderTexture(output);
+		displayImage.texture = rt;
 		
 		//output.PrintDataPart(50000);
 		output.PrintDataPart(1024);
