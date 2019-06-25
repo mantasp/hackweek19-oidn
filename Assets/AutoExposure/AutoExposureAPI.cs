@@ -5,15 +5,7 @@ public static class AutoExposureAPI
 {
     private static ComputeShader findShader(string name)
     {
-        ComputeShader[] compShaders = (ComputeShader[])Resources.FindObjectsOfTypeAll(typeof(ComputeShader));
-        for (int i = 0; i < compShaders.Length; i++)
-        {
-            if (compShaders[i].name == name)
-            {
-                return compShaders[i];
-            }
-        }
-        return null;
+        return (ComputeShader)Resources.Load(name);
     }
 
     public static float GetExposureValue(Texture2D input)
@@ -21,14 +13,14 @@ public static class AutoExposureAPI
         ComputeShader shader = findShader("ComputeExposure");
         if (shader == null)
         {
-            Debug.Log("Could not find exposure compute shader.");
+            Debug.LogError("Could not find exposure compute shader.");
             return 0.0f;
         }
 
         int kernel = shader.FindKernel("ComputeExposureMain");
         if (kernel < 0)
         {
-            Debug.Log("Could not find ComputeExposureMain kernel.");
+            Debug.LogError("Could not find ComputeExposureMain kernel.");
             return 0.0f;
         }
 
@@ -70,19 +62,19 @@ public static class AutoExposureAPI
         return exposureValue;
     }
 
-    public static Texture2D Map(Texture2D input, float exposureValue)
+    public static Texture Map(Texture input, float exposureValue)
     {
         ComputeShader mapShader = findShader("MapHDR");
         if(mapShader == null)
         {
-            Debug.Log("Could not find compute kernel.");
+            Debug.LogError("Could not find compute kernel.");
             return null;
         }
 
         int handleMapHDRMain = mapShader.FindKernel("MapHDRMain");
         if (handleMapHDRMain < 0)
         {
-            Debug.Log("Could not find kernel.");
+            Debug.LogError("Could not find kernel.");
             return null;
         }
 
@@ -96,30 +88,22 @@ public static class AutoExposureAPI
         mapShader.SetFloat("exposure", exposureValue);
         mapShader.Dispatch(handleMapHDRMain, input.width, input.height, 1);
 
-        Texture2D output2D = new Texture2D(input.width, input.height, TextureFormat.RGBAHalf, false);
-        RenderTexture.active = outputRT;
-        output2D.ReadPixels(new Rect(0, 0, input.width, input.height), 0, 0);
-        output2D.Apply();
-        RenderTexture.active = null;
-
-        outputRT.Release();
-
-        return output2D;
+        return outputRT;
     }
 
-    public static Texture2D Unmap(Texture2D input, float exposureValue)
+    public static Texture Unmap(Texture input, float exposureValue)
     {
         ComputeShader mapShader = findShader("UnmapHDR");
         if (mapShader == null)
         {
-            Debug.Log("Could not find unmap compute kernel.");
+            Debug.LogError("Could not find unmap compute kernel.");
             return null;
         }
 
         int handleUnmapHDRMain = mapShader.FindKernel("UnmapHDRMain");
         if (handleUnmapHDRMain < 0)
         {
-            Debug.Log("Could not find unmap kernel.");
+            Debug.LogError("Could not find unmap kernel.");
             return null;
         }
 
@@ -133,14 +117,6 @@ public static class AutoExposureAPI
         mapShader.SetFloat("inverseExposure", 1.0f / exposureValue);
         mapShader.Dispatch(handleUnmapHDRMain, input.width, input.height, 1);
 
-        Texture2D output2D = new Texture2D(input.width, input.height, TextureFormat.RGBAHalf, false);
-        RenderTexture.active = outputRT;
-        output2D.ReadPixels(new Rect(0, 0, input.width, input.height), 0, 0);
-        output2D.Apply();
-        RenderTexture.active = null;
-
-        outputRT.Release();
-
-        return output2D;
+        return outputRT;
     }
 }

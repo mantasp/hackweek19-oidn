@@ -17,7 +17,9 @@ public class RunTest : MonoBehaviour
 	private Model model;
 	private IWorker engine;
 	private Tensor inputTensor;
-	private RenderTexture rt;
+	public Texture barracudaOutputTexture;
+	public Texture denoiseTexture;
+	public float exposureValue;
 
 	// Use this for initialization
 	void Start ()
@@ -30,10 +32,18 @@ public class RunTest : MonoBehaviour
 		}
 		inputImage = ReadPFM.Read(pfmBytes);	
 
-		model = OIDNModel.BuildModel(weightsJSON, inputImage.height, inputImage.width);
-		engine = BarracudaWorkerFactory.CreateWorker(BarracudaWorkerFactory.Type.Compute, model, true);
+		exposureValue = AutoExposureAPI.GetExposureValue(inputImage);
+		if(exposureValue == 0.0f)
+		{
+			Debug.Log("Invalid exposure value.");
+			return;
+		}
+		Texture outputMapped = AutoExposureAPI.Map(inputImage, exposureValue);
 
-		inputTensor = new Tensor(inputImage);
+		model = OIDNModel.BuildModel(weightsJSON, inputImage.height, inputImage.width);
+		engine = BarracudaWorkerFactory.CreateWorker(BarracudaWorkerFactory.Type.Compute, model, false);
+
+		inputTensor = new Tensor(outputMapped);
 
 		StartCoroutine(RunInference());
 	}
@@ -54,9 +64,14 @@ public class RunTest : MonoBehaviour
 		var output = engine.Peek();
 		Profiler.EndSample();
 
-		rt = BarracudaTextureUtils.TensorToRenderTexture(output);
-		displayImage.texture = rt;
-		
+		barracudaOutputTexture = new RenderTexture(inputImage.width, inputImage.height, 
+			0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+		BarracudaTextureUtils.TensorToRenderTexture(output, barracudaOutputTexture as RenderTexture);
+	
+		// do stuff with outputMapped
+		denoiseTexture = AutoExposureAPI.Unmap(barracudaOutputTexture, exposureValue);
+		displayImage.texture = denoiseTexture;
+	
 		//output.PrintDataPart(50000);
 		output.PrintDataPart(1024);
 
@@ -71,9 +86,13 @@ public class RunTest : MonoBehaviour
 		{
 			displayImage.texture = inputImage;
 		}
-		else if (rt != null)
+		else if (Input.GetKey(KeyCode.B)) 
 		{
-			displayImage.texture = rt;
+			displayImage.texture = barracudaOutputTexture;
+		}
+		else if (denoiseTexture != null)
+		{
+			displayImage.texture = denoiseTexture;
 		}
 	}
 }
