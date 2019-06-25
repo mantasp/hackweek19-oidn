@@ -151,17 +151,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   computeExposureShader: {fileID: 7200000, guid: a6f7d9a40ec1845c19982f2add094949,
     type: 3}
-  mapHDRShader: {fileID: 7200000, guid: 2cbf78a3862964d6291f551979f4e415, type: 3}
-  unmapHDRShader: {fileID: 7200000, guid: 978de4334b70e4180b67519903c30cb1, type: 3}
+  mapHDRShader: {fileID: 7200000, guid: 1376e409200050640986f1272d705da9, type: 3}
+  unmapHDRShader: {fileID: 7200000, guid: 43d227d36c9dac34c9214134299f5c8d, type: 3}
   groupMaxData:
   - 12800
-  - -8711.9375
+  - -8711.937
   - 12800
-  - -6396.7026
+  - -6396.702
   - 12800
   - -5115.515
   - 1600
-  - -574.79193
+  - -574.7919
   run: 0
   clear: 0
   input: {fileID: 2800000, guid: 3239475ef21ff4afe9aa6d8120b9d55f, type: 3}
