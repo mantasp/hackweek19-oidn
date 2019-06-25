@@ -37,3 +37,5 @@ sysinfo.txt
 *.apk
 *.unitypackage
 .gradle
+
+.DS_Store
