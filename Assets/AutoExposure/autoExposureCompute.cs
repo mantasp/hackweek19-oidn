@@ -48,8 +48,10 @@ public class autoExposureCompute : MonoBehaviour
     {
         if (clear)
         {
-            MakeBlack(outputMapped);
-            MakeBlack(outputMappedInverse);
+            if (outputMapped)
+                MakeBlack(outputMapped);
+            if (outputMappedInverse)
+                MakeBlack(outputMappedInverse);
             lumSum = 0.0f;
             nonBlack = 0.0f;
             exposureValue = 0.0f;
@@ -58,9 +60,10 @@ public class autoExposureCompute : MonoBehaviour
         if (run)
         {
             run = false;
-
-            MakeBlack(outputMapped);
-            MakeBlack(outputMappedInverse);
+            if (outputMapped)
+                MakeBlack(outputMapped);
+            if (outputMappedInverse)
+                MakeBlack(outputMappedInverse);
 
             if (null == computeExposureShader|| null == mapHDRShader || null == unmapHDRShader || null == input || null == outputMapped || null == outputMappedInverse)
             {
