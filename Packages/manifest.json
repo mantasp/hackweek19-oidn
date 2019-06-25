@@ -2,8 +2,8 @@
   "dependencies": {
     "com.unity.ads": "2.0.8",
     "com.unity.analytics": "3.2.2",
-    "com.unity.barracuda": "https://github.com/mantasp/barracuda-release.git#0.2.3-preview",
-    "com.unity.barracuda.burst": "https://github.com/mantasp/barracuda-burst-release.git#0.2.3-preview",
+    "com.unity.barracuda": "https://github.com/mantasp/barracuda-release.git#0.2.2-preview",
+    "com.unity.barracuda.burst": "https://github.com/mantasp/barracuda-burst-release.git#0.2.2-preview",
     "com.unity.collab-proxy": "1.2.15",
     "com.unity.package-manager-ui": "2.0.7",
     "com.unity.purchasing": "2.0.3",
@@ -41,12 +41,12 @@
   },
   "lock": {
     "com.unity.barracuda.burst": {
-      "hash": "3e7aa6a209b34a9cd8a31073d258a11c15923da3",
-      "revision": "0.2.3-preview"
+      "hash": "5512f1032309afeed97a1853a95743ee74862f4f",
+      "revision": "0.2.2-preview"
     },
     "com.unity.barracuda": {
-      "hash": "0fa810df748aa78df9417eefc01ac3347515bf61",
-      "revision": "0.2.3-preview"
+      "hash": "1e33425ade727aeac21dfda77e2937956fa460ae",
+      "revision": "0.2.2-preview"
     }
   }
 }

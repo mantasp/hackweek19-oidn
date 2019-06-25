@@ -24,7 +24,7 @@ public class RunTest : MonoBehaviour
 		Application.targetFrameRate = 60;
 		
 		model = OIDNModel.BuildModel(weightsJSON, inputImage.height, inputImage.width);
-		engine = BarracudaWorkerFactory.CreateWorker(BarracudaWorkerFactory.Type.ComputePrecompiled, model, true);
+		engine = BarracudaWorkerFactory.CreateWorker(BarracudaWorkerFactory.Type.Compute, model, true);
 		
 		inputTensor = new Tensor(inputImage);
 
