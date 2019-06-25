@@ -1,0 +1,64 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ComputeExposureMain
+
+Texture2D<float4> InputTexture;
+int InputTextureWidth;
+
+struct maxStruct
+{
+    float nonBlack; // count of non black pixels
+    float lSum; // sum of luminances
+};
+RWStructuredBuffer<maxStruct> GroupMaxBuffer;
+groupshared maxStruct rowMaxData[64];
+
+const float eps = 1e-8f;
+
+[numthreads(64,1,1)]
+void ComputeExposureMain (uint3 groupID : SV_GroupID,
+    // 3D ID of thread group; range depends on Dispatch call
+    uint3 groupThreadID : SV_GroupThreadID,
+    // 3D ID of thread in a thread group; range depends on numthreads
+    uint groupIndex : SV_GroupIndex,
+    // flattened/linearized SV_GroupThreadID. 
+    // groupIndex specifies the index within the group (0 to 63)
+    uint3 id : SV_DispatchThreadID)
+    // = SV_GroupID * numthreads + SV_GroupThreadID
+    // id.x specifies the row in the input texture image
+{
+    int column;
+    const float log2 = 1.0 / log(2.0);
+
+    // find the maximum of this row 
+    // and store its data in rowMaxData[groupIndex]
+    rowMaxData[groupIndex].nonBlack = 0.0;
+    rowMaxData[groupIndex].lSum = 0.0;
+    for (column = 0; column < InputTextureWidth; column++)
+    {
+        float4 color = InputTexture[uint2(column, id.x)];
+        float L = 0.212671f * color.r + 0.715160f * color.g + 0.072169f * color.b;
+        if (L > eps)
+        {
+            rowMaxData[groupIndex].nonBlack += 1.0;
+            rowMaxData[groupIndex].lSum += log(L) * log2;
+        }
+    }
+
+    // find the maximum of this group 
+    // and store its data in GroupMaxBuffer[groupID.x]
+    GroupMemoryBarrierWithGroupSync();
+    if (0 == groupIndex)
+    {
+        float nonBlack = 0.0;
+        float lSum = 0.0;
+        for (int row = 0; row < 64; row++)
+        {
+            nonBlack += rowMaxData[row].nonBlack;
+            lSum += rowMaxData[row].lSum;
+        }
+
+        GroupMaxBuffer[groupID.x].nonBlack = nonBlack;
+        GroupMaxBuffer[groupID.x].lSum = lSum;
+
+    }
+}
