@@ -122,6 +122,7 @@ public class autoExposure : MonoBehaviour
             clear = false;
             MakeBlack(outputMapped);
             MakeBlack(outputMappedInverse);
+            exposureValue = 0.0f;
         }
         if (run)
         {
