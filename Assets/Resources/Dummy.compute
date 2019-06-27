@@ -1,0 +1,13 @@
+﻿#pragma kernel DummyMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+Texture2D<float4> InputTexture;
+RWTexture2D<float4> OutputTexture;
+
+[numthreads(8,8,1)]
+void DummyMain (uint3 id : SV_DispatchThreadID)
+{
+	float4 color = float4(0.0, 0.0, 1.0, 1.0);
+    OutputTexture[id.xy] = color;
+}
